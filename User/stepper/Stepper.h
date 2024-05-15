@@ -39,13 +39,13 @@ struct Steeper_t
 	void (*unInit)(struct Steeper_t *this);
 	void (*Send_Instruction)(struct Steeper_t *this, uint8_t *data, uint32_t dataLen);
 	int32_t (*Read_Current_Position)(struct Steeper_t *this);
-	void (*Achieve_Distance)(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance);
+	void (*Achieve_Distance)(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed, bool synchronizate);
 	int32_t (*get_current_position_from_buff)(struct Steeper_t *this);
+	void (*Speed_Control)(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t speed, bool synchronizate);
 };
 
-void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance);
-//void Stepper_stop_protect(struct Steeper_t *this);
-void Stepper_Achieve_Distance_In_specific_Speed(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed);
-// int32_t Stepper_get_current_position_from_buff(struct Steeper_t *this);
+void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed, bool synchronizate);
+void Stepper_synchronization(USART_TypeDef * USART);
+int32_t Stepper_get_current_position_from_buff(struct Steeper_t *this);
 
 #endif /* STEPPER_H */

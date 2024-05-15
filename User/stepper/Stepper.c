@@ -9,9 +9,8 @@ void Stepper_Send_Instruction(struct Steeper_t *this, uint8_t *data, uint32_t da
 	Usart_SendArray(this->pUSARTx, data, dataLen);
 }
 
-void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance)
+void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed, bool synchronizate)
 {
-	int16_t speed = 30;
 	// calculate speed according to the period
 
 	if (this->FOC_VERSION == Stepper_FOC_Version_5_0)
@@ -33,6 +32,10 @@ void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t d
 
 		data[10] = 0x00;
 		data[11] = 0x00; // multiple instructions
+		if(synchronizate)
+		{
+			data[11] = 0x01;
+		}
 
 		if (this->check_way == Stepper_Check_Way_XOR)
 		{
@@ -115,58 +118,65 @@ void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t d
 	}
 }
 
-void Stepper_Achieve_Distance_In_specific_Speed(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed)
+
+
+void Stepper_Speed_Control(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t speed, bool synchronizate)
 {
-	uint8_t data[13] = {0};
+	if(this->FOC_VERSION == Stepper_FOC_Version_4_2)
+	{
+		App_Printf("Stepper_Speed_Control: FOC version error!\n");
+		return;
+	}
+	
+	uint8_t data[8] = {0};
 	data[0] = this->address;
-	data[1] = 0xFD; // Distance controlled instruction
+	data[1] = 0xF6; // Speed controlled instruction
 	data[2] = direction;
 
 	data[3] = speed >> 8;
 	data[4] = speed;
 
-	data[5] = this->acceleration;
+	data[5] = 0x00;	// acceleration
 
-	data[6] = distance >> 24;
-	data[7] = distance >> 16;
-	data[8] = distance >> 8;
-	data[9] = distance;
-
-	data[10] = 0x00;
-	data[11] = 0x00; // multiple instructions
+	if(synchronizate)
+	{
+		data[6] = 0x01;
+	}
 
 	if (this->check_way == Stepper_Check_Way_XOR)
 	{
 		uint8_t check = 0;
-		for (int i = 0; i < 12; i++)
+		for (int i = 0; i < 7; i++)
 		{
 			check ^= data[i];
 		}
-		data[12] = check;
+		data[7] = check;
 	}
 	else if (this->check_way == Stepper_Check_Way_0X6B)
 	{
-		data[12] = 0x6B;
+		data[7] = 0x6B;
 	}
 	else
 	{
 		// error
-		App_Printf("Stepper_Achieve_Distance: check way error!\n");
+		App_Printf("Stepper_Speed_Control: check way error!\n");
 		return;
 	}
 
-	this->Send_Instruction(this, data, 13);
-	return;
+	this->Send_Instruction(this, data, 8);
 }
 
-//void Stepper_stop_protect(struct Steeper_t *this)
-//{
-//	uint8_t date[4];
-//	date[0] = this->address;
-//	date[1] = 0x0E;
-//	date[2] = 0x52;
-//	date[3] = 0x6B;
-//}
+void Stepper_synchronization(USART_TypeDef * pUSARTx)
+{
+	uint8_t data[4];
+	data[0] = 0x00;
+	data[1] = 0xFF;
+	data[2] = 0x66;
+
+	// data[3] = 0xFF ^ 0x66;
+	data[3] = 0x6B;
+	Usart_SendArray(pUSARTx, data, 4);
+}
 
 int32_t Stepper_Read_Current_Position(struct Steeper_t *this)
 {
