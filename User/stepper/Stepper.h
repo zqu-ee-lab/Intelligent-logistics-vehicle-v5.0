@@ -32,6 +32,7 @@ struct Steeper_t
 	struct Buff *BUFF;
 	uint8_t acceleration;
 	uint8_t period;
+	uint8_t direction_invert;
 	enum Stepper_Check_Way_t check_way;
 	enum Stepper_FOC_Version_t FOC_VERSION;
 

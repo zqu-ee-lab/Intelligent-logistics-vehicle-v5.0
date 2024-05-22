@@ -74,6 +74,7 @@
 #include "OLED.h"
 #include "sys.h"
 #include "key.h"
+#include "PWM.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -266,7 +267,11 @@ static void OLED_SHOW(void *pvParameters)
 
 	while (1)
 	{
+		// enter critical area
+		taskENTER_CRITICAL();
 		UpdateScreenDisplay();
+		// exit critical area
+		taskEXIT_CRITICAL();
 		vTaskDelay(200);
 	}
 }
@@ -321,9 +326,9 @@ static void USER_Init(void)
 	vSetupSysInfoTest();
 #endif
 	left_front_stepper_motor_handle = Stepper_Init(USART2, 0x01, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	right_front_stepper_motor_handle = Stepper_Init(USART2, 0x02, U4_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	left_rear_stepper_motor_handle = Stepper_Init(USART2, 0x03, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	right_rear_stepper_motor_handle = Stepper_Init(USART2, 0x04, U4_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	left_rear_stepper_motor_handle = Stepper_Init(USART2, 0x02, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	right_rear_stepper_motor_handle = Stepper_Init(USART2, 0x03, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	right_front_stepper_motor_handle = Stepper_Init(USART2, 0x04, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
 
 	test1();
 	UI_updata();
@@ -349,6 +354,8 @@ static void BSP_Init(void)
 	bsp_InitKey();
 	Delayms(1000);
 	OLED_Init();
+	OLED_ShowString(1,1,"hello");
+	PWM_TIM8_config(20000, 168, 500, 2500, 2000/3*2+500, 2);
 
 	Init_USART1_All(); //*调试信息输出
 	Init_USART2_All(); //*USART2 _stepper_motor

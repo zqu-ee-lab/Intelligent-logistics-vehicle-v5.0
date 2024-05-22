@@ -131,7 +131,7 @@ void Stepper_Speed_Control(struct Steeper_t *this, enum Stepper_Direction_t dire
 	uint8_t data[8] = {0};
 	data[0] = this->address;
 	data[1] = 0xF6; // Speed controlled instruction
-	data[2] = direction;
+	data[2] = direction^(this->direction_invert);
 
 	data[3] = speed >> 8;
 	data[4] = speed;
@@ -302,6 +302,7 @@ struct Steeper_t *Stepper_Init(USART_TypeDef *pUSARTx, uint8_t address, struct B
 	}
 	this->pUSARTx = pUSARTx;
 	this->address = address;
+	this->direction_invert = 0x01;	 // default direction invert
 	this->BUFF = BUFF;
 	this->acceleration = 0x00;		 // default acceleration
 	this->period = 10;				 // unit : ms

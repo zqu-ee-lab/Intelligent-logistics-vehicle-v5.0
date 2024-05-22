@@ -30,9 +30,9 @@ void OLED_I2C_Start(void)
 {
     OLED_W_SDA(1);
     OLED_W_SCL(1);
-    // Delayus(1);
+    Delayus(2);
     OLED_W_SDA(0);
-    // Delayus(1);
+		Delayus(2);
     OLED_W_SCL(0);
 }
 
@@ -45,9 +45,9 @@ void OLED_I2C_Stop(void)
 {
     OLED_W_SDA(0);
     OLED_W_SCL(1);
-    // Delayus(1);
+    Delayus(2);
     OLED_W_SDA(1);
-    // Delayus(1);
+    Delayus(2);
 }
 
 /**
