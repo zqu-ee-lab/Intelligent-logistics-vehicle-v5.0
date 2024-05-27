@@ -160,3 +160,11 @@ void Delayxms_OS(u32 nms)
 {
 	Delayus(1000 * nms);
 }
+
+/// @brief 获取DWT计数器的值
+/// @param  无
+/// @return DWT计数器的值
+uint32_t get_DWT_CYCCNT(void)
+{
+	return DWT_CYCCNT;
+}

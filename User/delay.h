@@ -20,8 +20,7 @@
 void delay_init(u8 SYSCLK);
 void Delayus(u32 nus);
 void Delayms(u32 nms);
-void Delayxms(u32 nms);
-void Delay_hus(u32 nus);
+uint32_t get_DWT_CYCCNT(void);
 
 #endif
 

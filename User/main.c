@@ -264,13 +264,26 @@ void sendto_Upper(void *parameter)
  */
 static void OLED_SHOW(void *pvParameters)
 {
-
+	int times=0;
+	char str[70];
+	uint32_t start_time = 0;
+	uint32_t end_time = 0;
+	float fps = 0;
 	while (1)
 	{
 		// enter critical area
 		taskENTER_CRITICAL();
+		start_time = get_DWT_CYCCNT();
+		sprintf(str, "times:%d", times++);
+		if(times>=4) GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+		if(times>=9) GPIO_SetBits(GPIOE, GPIO_Pin_1),times=0;
+		DrawString(6,0,str);
+		sprintf(str, "fps:%.2f", fps);
+		DrawString(7,1,str);
 		UpdateScreenDisplay();
 		// exit critical area
+		end_time = get_DWT_CYCCNT();
+		fps = (float)SystemCoreClock / (end_time - start_time);
 		taskEXIT_CRITICAL();
 		vTaskDelay(200);
 	}

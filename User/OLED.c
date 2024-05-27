@@ -1,6 +1,8 @@
 #include "stm32f4xx.h"
 #include "OLED_Font.h"
 #include "delay.h"
+#include "I2C.h"
+
 /*引脚配置*/
 #define OLED_W_SCL(x) GPIO_WriteBit(GPIOE, GPIO_Pin_2, (BitAction)(x))
 #define OLED_W_SDA(x) GPIO_WriteBit(GPIOE, GPIO_Pin_3, (BitAction)(x))
@@ -19,6 +21,8 @@ void OLED_I2C_Init(void)
 
     OLED_W_SCL(1);
     OLED_W_SDA(1);
+
+   I2C2_Init();
 }
 
 /**
@@ -77,11 +81,12 @@ void OLED_I2C_SendByte(uint8_t Byte)
  */
 void OLED_WriteCommand(uint8_t Command)
 {
-    OLED_I2C_Start();
-    OLED_I2C_SendByte(0x78); // 从机地址
-    OLED_I2C_SendByte(0x00); // 写命令
-    OLED_I2C_SendByte(Command);
-    OLED_I2C_Stop();
+    // OLED_I2C_Start();
+    // OLED_I2C_SendByte(0x78); // 从机地址
+    // OLED_I2C_SendByte(0x00); // 写命令
+    // OLED_I2C_SendByte(Command);
+    // OLED_I2C_Stop();
+    I2C2_WriteData(0x78, 0x00, Command);
 }
 
 /**
@@ -91,11 +96,12 @@ void OLED_WriteCommand(uint8_t Command)
  */
 void OLED_WriteData(uint8_t Data)
 {
-    OLED_I2C_Start();
-    OLED_I2C_SendByte(0x78); // 从机地址
-    OLED_I2C_SendByte(0x40); // 写数据
-    OLED_I2C_SendByte(Data);
-    OLED_I2C_Stop();
+    // OLED_I2C_Start();
+    // OLED_I2C_SendByte(0x78); // 从机地址
+    // OLED_I2C_SendByte(0x40); // 写数据
+    // OLED_I2C_SendByte(Data);
+    // OLED_I2C_Stop();
+    I2C2_WriteData(0x78, 0x40, Data);
 }
 
 /**
@@ -106,14 +112,15 @@ void OLED_WriteData(uint8_t Data)
  */
 static inline void OLED_WriteMultiData(const u8 *dat, u8 len)
 {
-    u8 i;
-    OLED_I2C_Start();        // 通信开始
-    OLED_I2C_SendByte(0X78); // 写从机地址'0111 100' 读写符号'0'
-    OLED_I2C_SendByte(0X40); // 根据参数选择写命令还是数据
-    for (i = 0; i < len; i++)
-        OLED_I2C_SendByte(dat[i]);
-    // 通信结束
-    OLED_I2C_Stop();
+    // u8 i;
+    // OLED_I2C_Start();        // 通信开始
+    // OLED_I2C_SendByte(0X78); // 写从机地址'0111 100' 读写符号'0'
+    // OLED_I2C_SendByte(0X40); // 根据参数选择写命令还是数据
+    // for (i = 0; i < len; i++)
+    //     OLED_I2C_SendByte(dat[i]);
+    // // 通信结束
+    // OLED_I2C_Stop();
+    I2C2_WriteMultiData(0x78, 0x40, dat, len);
 }
 
 /**
