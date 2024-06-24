@@ -1,8 +1,8 @@
 /*
  * @Date: 2023-10-04 11:45:55
- * @LastEditors: zjc
- * @LastEditTime: 2023-10-17 11:44:11
- * @FilePath: \RVMDK（uv5）f:\桌面\F407_test\User\usart.c
+ * @LastEditors: JAR_CHOW
+ * @LastEditTime: 2024-06-24 20:36:47
+ * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\usart.c
  * @Verson:V0.3(配合buffer v0.2)
  * v0.1 USART3增加DMA接受
  * v0.2 USART4，USART5，USART2增加DMA接受
@@ -683,6 +683,7 @@ void USART2_Config(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
@@ -696,7 +697,7 @@ void USART2_Config(void)
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_USART2);
 	// 配置串口的工作参数
 	// 配置波特率
-	USART_InitStructure.USART_BaudRate = 115200;
+	USART_InitStructure.USART_BaudRate = 921600;
 	// 配置 针数据字长
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	// 配置停止位
@@ -1128,10 +1129,10 @@ static void UART4_Config(void)
 }
 void DMA1_Stream2_IRQHandler()
 {
-//	u8 Tail4;
+	u8 Tail4;
 	if (DMA_GetFlagStatus(DMA1_Stream2, DMA_FLAG_TCIF2) != RESET)
 	{
-//		Tail4 = BUFFER_SIZE_U4 - DMA1_Stream2->NDTR; // 获取接收到的数据长度
+		Tail4 = BUFFER_SIZE_U4 - DMA1_Stream2->NDTR; // 获取接收到的数据长度
 		Write_BUFF_P(0, &U4_buffer);
 	}
 	DMA_ClearFlag(DMA1_Stream2, DMA_FLAG_TCIF2);
@@ -1253,6 +1254,7 @@ static void NVIC_UART5_Configuration(void)
 void UART5_Config(void)
 {
 	USART_InitTypeDef USART_InitStructure;
+	USART_StructInit(&USART_InitStructure);
 	GPIO_InitTypeDef GPIO_InitStructure;
 	DMA_InitTypeDef DMA_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -1264,6 +1266,7 @@ void UART5_Config(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
@@ -1416,7 +1419,7 @@ union AH
 	float fdata;
 	char ldata[4];
 } FloatLongType;
-void VOFA_Send_float(float *Data, uint8_t b)
+void VOFA_Send_float(float *Data, u8 b)
 {
 	u8 i;
 	const u8 tail[4] = {0x00, 0x00, 0x80, 0x7f};

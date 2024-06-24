@@ -19,6 +19,10 @@ void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t d
 		data[0] = this->address;
 		data[1] = 0xFD; // Distance controlled instruction
 		data[2] = direction;
+		if(this->direction_invert)
+		{
+			data[2] ^= 0x01;
+		}
 
 		data[3] = speed >> 8;
 		data[4] = speed;
@@ -136,7 +140,7 @@ void Stepper_Speed_Control(struct Steeper_t *this, enum Stepper_Direction_t dire
 	data[3] = speed >> 8;
 	data[4] = speed;
 
-	data[5] = 0x00;	// acceleration
+	data[5] = 0x9B;	// acceleration
 
 	if(synchronizate)
 	{
@@ -165,6 +169,7 @@ void Stepper_Speed_Control(struct Steeper_t *this, enum Stepper_Direction_t dire
 
 	this->Send_Instruction(this, data, 8);
 }
+
 
 void Stepper_synchronization(USART_TypeDef * pUSARTx)
 {
@@ -244,6 +249,37 @@ int32_t Stepper_Read_Current_Position(struct Steeper_t *this)
 	return 0;
 }
 
+void Stepper_stop(struct Steeper_t *this)
+{
+	uint8_t data[7] = {0};
+	data[0] = this->address;
+	data[1] = 0xFE; // stop instruction
+	data[2] = 0x98;
+	data[3] = 0x01;
+
+	if (this->check_way == Stepper_Check_Way_XOR)
+	{
+		uint8_t check = 0;
+		for (int i = 0; i < 2; i++)
+		{
+			check ^= data[i];
+		}
+		data[4] = check;
+	}
+	else if (this->check_way == Stepper_Check_Way_0X6B)
+	{
+		data[4] = 0x6B;
+	}
+	else
+	{
+		// error
+		App_Printf("Stepper_stop: check way error!\n");
+		return;
+	}
+
+	this->Send_Instruction(this, data, 5);
+}
+
 int32_t Stepper_get_current_position_from_buff(struct Steeper_t *this)
 {
 	int32_t current_position = 0;
@@ -302,9 +338,9 @@ struct Steeper_t *Stepper_Init(USART_TypeDef *pUSARTx, uint8_t address, struct B
 	}
 	this->pUSARTx = pUSARTx;
 	this->address = address;
-	this->direction_invert = 0x01;	 // default direction invert
+	this->direction_invert = 0x00;	 // default direction invert
 	this->BUFF = BUFF;
-	this->acceleration = 0x00;		 // default acceleration
+	this->acceleration = 0x9B;		 // default acceleration
 	this->period = 10;				 // unit : ms
 	this->check_way = check_way;	 // default check way
 	this->FOC_VERSION = FOC_VERSION; // default FOC version
@@ -315,6 +351,8 @@ struct Steeper_t *Stepper_Init(USART_TypeDef *pUSARTx, uint8_t address, struct B
 	this->Achieve_Distance = Stepper_Achieve_Distance;
 	this->Send_Instruction = Stepper_Send_Instruction;
 	this->get_current_position_from_buff = Stepper_get_current_position_from_buff;
+	this->stop = Stepper_stop;
+	this->Speed_Control = Stepper_Speed_Control;
 
 	return this;
 }

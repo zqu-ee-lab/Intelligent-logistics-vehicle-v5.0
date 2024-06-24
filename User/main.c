@@ -1,4 +1,14 @@
 /*
+ * @Author: JAR_CHOW
+ * @Date: 2024-05-14 20:47:46
+ * @LastEditors: JAR_CHOW
+ * @LastEditTime: 2024-06-24 22:06:39
+ * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\main.c
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
+/*
  * ......................................&&.........................
  * ....................................&&&..........................
  * .................................&&&&............................
@@ -87,6 +97,7 @@
 #include "my_math.h"
 #include "oled_draw.h"
 #include "oled_buffer.h"
+#include "APP_INCLUDE.h"
 
 /**************************** 任务句柄 ********************************/
 /*
@@ -95,10 +106,9 @@
  * 这个句柄可以为NULL。
  */
 
-
 QueueHandle_t Task_Number_Handle = NULL;
 
-static TaskHandle_t analyse_data_Handle = NULL;	 //+解析数据定时器句柄
+static TimerHandle_t analyse_data_Handle = NULL; //+解析数据定时器句柄
 static TaskHandle_t OLED_SHOW_Handle = NULL;	 //+OLDE显示句柄
 static TaskHandle_t AppTaskCreate_Handle = NULL; //+创建任务句柄
 static TaskHandle_t KEY_SCAN_Handle = NULL;		 //+KEY_SCAN句柄
@@ -106,8 +116,12 @@ static TaskHandle_t Task_schedule_Handle = NULL; //+SysInfoTestSent句柄
 
 void avoid_warning()
 {
-	Task_schedule_Handle=Task_schedule_Handle;
+	Task_schedule_Handle = Task_schedule_Handle;
 }
+
+struct angle Angle; // the angle of the car
+
+
 EventGroupHandle_t Group_One_Handle = NULL; //+事件组句柄
 
 /******************************* Global variable declaration ************************************/
@@ -121,10 +135,10 @@ EventGroupHandle_t Group_One_Handle = NULL; //+事件组句柄
 *************************************************************************
 */
 static void analyse_data(void);
-static void AppTaskCreate(void);			   /* 用于创建任务 */
-static void OLED_SHOW(void *pvParameters);	   /* Test_Task任务实现 */
-static void KEY_SCAN(void *pvParameters);	   /* Test_Task任务实现 */
-static void BSP_Init(void); /* 用于初始化板载相关资源 */
+static void AppTaskCreate(void);		   /* 用于创建任务 */
+static void OLED_SHOW(void *pvParameters); /* Test_Task任务实现 */
+static void KEY_SCAN(void *pvParameters);  /* Test_Task任务实现 */
+static void BSP_Init(void);				   /* 用于初始化板载相关资源 */
 static void USER_Init(void);
 
 /*****************************************************************
@@ -163,6 +177,7 @@ int main(void)
 		; /* 正常不会执行到这里 */
 }
 
+extern void main_task_init(void);
 /***********************************************************************
  * @ 函数名  ： AppTaskCreate
  * @ 功能说明： 为了方便管理，所有的任务创建函数都放在这个函数里面
@@ -203,14 +218,19 @@ static void AppTaskCreate(void)
 						  (TaskHandle_t *)&OLED_SHOW_Handle); /* 任务控制块指针 */
 	if (xReturn == pdPASS)
 		App_Printf("OLED_SHOW任务创建成功\r\n");
-	xReturn = xTaskCreate((TaskFunction_t)analyse_data,
-						  (const char *)"analyse_data",
-						  (uint16_t)256,						 /* 任务栈大小 */
-						  (void *)NULL,							 /* 任务入口函数参数 */
-						  (UBaseType_t)7,						 /* 任务的优先级 */
-						  (TaskHandle_t *)&analyse_data_Handle); /* 任务控制块指针 */
-	if (xReturn == pdPASS)
-		App_Printf("analyse_data任务创建成功\r\n");
+	// xReturn = xTaskCreate((TaskFunction_t)analyse_data,
+	// 					  (const char *)"analyse_data",
+	// 					  (uint16_t)256,						 /* 任务栈大小 */
+	// 					  (void *)NULL,							 /* 任务入口函数参数 */
+	// 					  (UBaseType_t)7,						 /* 任务的优先级 */
+	// 					  (TaskHandle_t *)&analyse_data_Handle); /* 任务控制块指针 */
+	// if (xReturn == pdPASS)
+	// 	App_Printf("analyse_data任务创建成功\r\n");
+
+	// software callback function
+	analyse_data_Handle = xTimerCreate("analyse_data", pdMS_TO_TICKS(15), pdTRUE, (void *)0, (TimerCallbackFunction_t)analyse_data);
+
+	main_task_init();
 
 	Task_Number_Handle = xQueueCreate(1, 1); // 开始解析数据
 	Group_One_Handle = xEventGroupCreate();
@@ -218,6 +238,8 @@ static void AppTaskCreate(void)
 
 	// 挂机任务，等待选择任务
 	vTaskDelete(AppTaskCreate_Handle); // 删除AppTaskCreate任务
+
+	xTimerStart(analyse_data_Handle, 0);
 
 	taskEXIT_CRITICAL(); // 退出临界区
 }
@@ -228,15 +250,43 @@ static void AppTaskCreate(void)
  */
 static void analyse_data(void)
 {
-	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = pdMS_TO_TICKS(15); // 10ms
-	xLastWakeTime = xTaskGetTickCount();
-	for (;;)
-	{
-		/* code */
+	u8 check_sum;
+    const char TOFSENSE[] = {0x55, 0x53};
+	if(BUFF_pop_by_Protocol(&U1_buffer, TOFSENSE, 2, Angle.data, 9) == 9){
+		check_sum = (0x55 + 0x53 + Angle.data[5] + Angle.data[4] + Angle.data[7] + Angle.data[6]);
+		if (Angle.data[8] == check_sum)
+		{
+			Angle.z = -((Angle.data[5] << 8) + Angle.data[4]);
+			// printf("%.2f\r\n", (float)Angle.z / 32768 * 180);
+		}
+	}
+	
+	const char head_qr_code[] = {0xFF, 0x01};
+	if (BUFF_pop_with_check_by_Protocol(&U4_buffer, head_qr_code, 2, qr_code_data_, 8, 1, 6) == 6){
+		char str[33];
+		sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'A',qr_code_data_[1]+'A',qr_code_data_[2]+'A',qr_code_data_[3]+'A',qr_code_data_[4]+'A',qr_code_data_[5]+'A');
+		// DrawString(4, 1, str);
+		// char nmb[3]={0xFF, 0xFF,0xFF};
+		// Usart_SendArray(UART5, nmb, 3);
+	}
 
+	const char head_color_position[] = {0xFF, 0x02};
+	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_color_position, 2, color_position, 16, 1, 2) == 2){
+		char str[33];
+		sprintf(str, "%d %d", color_position[0], color_position[1]);
+		DrawString(4, 1, str);
+	}
 
-		vTaskDelayUntil(&xLastWakeTime, xFrequency);
+	const char head_cycle[] = {0xFF, 0x03};
+	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_cycle, 2, cycle_position, 16, 1, 2) == 2){
+
+	}
+
+	const char head_claws[] = {0xFF, 0x04};
+	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_claws, 2, &claw_state, 8, 1, 1) == 1){
+		if(claw_state != 1){
+			claw_state = 0;
+		}
 	}
 }
 
@@ -246,12 +296,10 @@ static void analyse_data(void)
  */
 void sendto_Upper(void *parameter)
 {
-		float VOFA_Data[4];
-    VOFA_Data[0] = 0;
-    VOFA_Send_float(VOFA_Data, 4); //! 发送数据给VOFA
+	float VOFA_Data[4];
+	VOFA_Data[0] = 0;
+	VOFA_Send_float(VOFA_Data, 4); //! 发送数据给VOFA
 }
-
-
 
 /**
  * the following code is about the task that we create
@@ -264,7 +312,6 @@ void sendto_Upper(void *parameter)
  */
 static void OLED_SHOW(void *pvParameters)
 {
-	int times=0;
 	char str[70];
 	uint32_t start_time = 0;
 	uint32_t end_time = 0;
@@ -274,12 +321,23 @@ static void OLED_SHOW(void *pvParameters)
 		// enter critical area
 		taskENTER_CRITICAL();
 		start_time = get_DWT_CYCCNT();
-		sprintf(str, "times:%d", times++);
-		if(times>=4) GPIO_ResetBits(GPIOE, GPIO_Pin_1);
-		if(times>=9) GPIO_SetBits(GPIOE, GPIO_Pin_1),times=0;
-		DrawString(6,0,str);
+		DrawString(6, 1, "       ");
+
+		sprintf(str, "angle:%.2f", (float)Angle.z / 32768 * 180);
+		DrawString(5, 1, str);
+
+		if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == Bit_SET)
+		{
+			sprintf(str, "stop");
+		}
+		else if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET)
+		{
+			sprintf(str, "running");
+		}
+		DrawString(6, 1, str);
 		sprintf(str, "fps:%.2f", fps);
-		DrawString(7,1,str);
+		// sprintf(str, "%4d %4d",TIM8->CCR1,TIM8->CCR2);
+		DrawString(7, 1, str);
 		UpdateScreenDisplay();
 		// exit critical area
 		end_time = get_DWT_CYCCNT();
@@ -306,22 +364,22 @@ static void KEY_SCAN(void *parameter)
 		bsp_KeyScan();
 		Key_Value = bsp_GetKey();
 		switch (Key_Value)
-			{
-			case up___:
-				UI_prev();
-				break;
-			case enter___:
-				UI_enter();
-				break;
-			case down___:
-				UI_next();
-				break;
-			case back___:
-				UI_back();
-				break;
-			default:
-				break;
-			}
+		{
+		case up___:
+			UI_prev();
+			break;
+		case enter___:
+			UI_enter();
+			break;
+		case down___:
+			UI_next();
+			break;
+		case back___:
+			UI_back();
+			break;
+		default:
+			break;
+		}
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 	}
 }
@@ -333,15 +391,32 @@ struct Steeper_t *left_front_stepper_motor_handle = NULL;
 struct Steeper_t *right_front_stepper_motor_handle = NULL;
 struct Steeper_t *left_rear_stepper_motor_handle = NULL;
 struct Steeper_t *right_rear_stepper_motor_handle = NULL;
+struct Steeper_t *up_down_stepper_motor_handle = NULL;
+struct Steeper_t *turntable_stepper_motor_handle = NULL;
 static void USER_Init(void)
 {
 #if configGENERATE_RUN_TIME_STATS && configUSE_STATS_FORMATTING_FUNCTIONS
 	vSetupSysInfoTest();
 #endif
-	left_front_stepper_motor_handle = Stepper_Init(USART2, 0x01, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	left_rear_stepper_motor_handle = Stepper_Init(USART2, 0x02, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	right_rear_stepper_motor_handle = Stepper_Init(USART2, 0x03, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
-	right_front_stepper_motor_handle = Stepper_Init(USART2, 0x04, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	left_front_stepper_motor_handle = Stepper_Init(USART2, 0x02, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	left_rear_stepper_motor_handle = Stepper_Init(USART2, 0x01, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	right_rear_stepper_motor_handle = Stepper_Init(USART2, 0x04, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	right_front_stepper_motor_handle = Stepper_Init(USART2, 0x03, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	right_rear_stepper_motor_handle->direction_invert = 1;
+	right_front_stepper_motor_handle->direction_invert = 1;
+
+
+	
+	up_down_stepper_motor_handle = Stepper_Init(USART2, 0x05, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	turntable_stepper_motor_handle = Stepper_Init(USART2, 0x06, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+
+	// turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Forward, 0x400, 0x900, false);
+
+	// while(1)
+	// Delayms(1000);
+
+	// up_down_stepper_motor_handle->Achieve_Distance(up_down_stepper_motor_handle, Stepper_Forward, 0x400, 0x100, false);
+	
 
 	test1();
 	UI_updata();
@@ -367,16 +442,36 @@ static void BSP_Init(void)
 	bsp_InitKey();
 	Delayms(1000);
 	OLED_Init();
-	OLED_ShowString(1,1,"hello");
-	PWM_TIM8_config(20000, 168, 500, 2500, 2000/3*2+500, 2);
+	OLED_ShowString(1, 1, "hello");
+	// Iinitial_BUFF(&U1_buffer, BUFFER_SIZE_U1);
+	// Iinitial_BUFF(&U2_buffer, BUFFER_SIZE_U2);
+	// Iinitial_BUFF(&U3_buffer, BUFFER_SIZE_U3);
+	// Iinitial_BUFF(&U4_buffer, BUFFER_SIZE_U4);
+	// Iinitial_BUFF(&U5_buffer, BUFFER_SIZE_U5);
+	PWM_TIM8_config(20000, 168, 500, 2500, 2000 / 3 * 2 + 500, 2);
 
 	Init_USART1_All(); //*调试信息输出
 	Init_USART2_All(); //*USART2 _stepper_motor
+	Init_UART4_All();  //*linux
+	Init_UART5_All();  //*
+
 
 	Buzzer_ONE();
 	Delayms(1);
 
 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
+	// Usart_SendArray(UART5, "mr_chow\n", 8);
+	// while(1){
+	// 	char data[12];
+	// 	if(BUFF_pop_by_Protocol(&U5_buffer, (char *)"mr_chow", 7, data, 8) == 8){
+	// 		Usart_SendArray(UART5,"mr_chow",7);
+	// 		GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+	// 	}
+	// 	Delayms(50);
+	// 	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+	// 	Delayms(50);
+	// 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
+	// }
 }
 
 ///********************************END OF FILE****************************/

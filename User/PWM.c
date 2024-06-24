@@ -17,7 +17,9 @@ void PWM_TIM1_config(uint16_t arr, uint16_t psc, uint16_t CCR1_Val, uint16_t CCR
 
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+		TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_OCInitTypeDef TIM_OCInitStructure;
+		TIM_OCStructInit(&TIM_OCInitStructure);
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
@@ -78,7 +80,9 @@ void PWM_TIM8_config(uint16_t arr, uint16_t psc, uint16_t CCR1_Val, uint16_t CCR
 
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+		TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
     TIM_OCInitTypeDef TIM_OCInitStructure;
+		TIM_OCStructInit(&TIM_OCInitStructure);
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, ENABLE);
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
@@ -94,6 +98,7 @@ void PWM_TIM8_config(uint16_t arr, uint16_t psc, uint16_t CCR1_Val, uint16_t CCR
     GPIO_PinAFConfig(GPIOC, GPIO_PinSource9, GPIO_AF_TIM8);
 
     // 初始化TIM8
+	
     TIM_TimeBaseStructure.TIM_Period = arr - 1;                 // 设置在下一个更新事件装入活动的自动重装载寄存器周期的值
     TIM_TimeBaseStructure.TIM_Prescaler = psc - 1;              // 设置用来作为TIMx时钟频率除数的预分频值
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;     // 死区时间

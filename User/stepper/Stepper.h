@@ -43,6 +43,7 @@ struct Steeper_t
 	void (*Achieve_Distance)(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed, bool synchronizate);
 	int32_t (*get_current_position_from_buff)(struct Steeper_t *this);
 	void (*Speed_Control)(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t speed, bool synchronizate);
+	void (*stop)(struct Steeper_t *this);
 };
 
 void Stepper_Achieve_Distance(struct Steeper_t *this, enum Stepper_Direction_t direction, uint32_t distance, uint32_t speed, bool synchronizate);

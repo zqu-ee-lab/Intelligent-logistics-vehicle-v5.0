@@ -1,3 +1,13 @@
+/*
+ * @Author: JAR_CHOW
+ * @Date: 2024-05-14 20:47:46
+ * @LastEditors: JAR_CHOW
+ * @LastEditTime: 2024-06-13 22:41:06
+ * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\buffer.h
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
 
 #ifndef buffer__
 #define buffer__
@@ -31,7 +41,7 @@ struct Buff
 
 
 // extern struct Buff BUFF;
-extern struct Buff U3_buffer, U2_buffer, IIC_buff, U4_buffer, U5_buffer;
+extern struct Buff U3_buffer, U2_buffer, IIC_buff, U4_buffer, U5_buffer, U1_buffer;
 void Iinitial_BUFF(struct Buff *BUFF, u8 size_);
 void Write_BUFF_P(u8 num, struct Buff *BUFF);
 void Write_BUFF(u8 *P, struct Buff *BUFF);

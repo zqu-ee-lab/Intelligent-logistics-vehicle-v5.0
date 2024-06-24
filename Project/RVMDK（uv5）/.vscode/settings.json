@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "my_math.h": "c",
+        "app_include.h": "c",
+        "app_task.h": "c",
+        "pid.h": "c",
+        "usart.h": "c"
     }
 }

@@ -1,3 +1,13 @@
+/*
+ * @Author: JAR_CHOW
+ * @Date: 2024-05-14 20:47:46
+ * @LastEditors: JAR_CHOW
+ * @LastEditTime: 2024-06-20 22:31:51
+ * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\usart.h
+ * @Description: 
+ * 
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
+ */
 #ifndef __USART_H
 #define __USART_H
 

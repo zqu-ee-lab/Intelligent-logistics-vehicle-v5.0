@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F40_41xxx,ARM_MATH_CM4,</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\..\Libraries\CMSIS\Include;..\..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\..\User;..\..\FreeRTOS\include;..\..\FreeRTOS\port\RVDS\ARM_CM4F;..\..\User\uart;..\..\User\key;..\..\User\led;..\..\User\algorithm\mecanum;..\..\User\stepper;..\..\User\algorithm;..\..\User\bsp_base_tim;..\..\User\bsp_i2c</IncludePath>
+              <IncludePath>..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\..\Libraries\CMSIS\Include;..\..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\..\User;..\..\FreeRTOS\include;..\..\FreeRTOS\port\RVDS\ARM_CM4F;..\..\User\uart;..\..\User\key;..\..\User\led;..\..\User\algorithm\mecanum;..\..\User\stepper;..\..\User\algorithm;..\..\User\bsp_base_tim;..\..\User\bsp_i2c;..\..\APPLICATION</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -961,6 +961,11 @@
               <FileName>APP_mecanum_car.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\APPLICATION\APP_mecanum_car.c</FilePath>
+            </File>
+            <File>
+              <FileName>APP_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\APPLICATION\APP_task.c</FilePath>
             </File>
           </Files>
         </Group>
