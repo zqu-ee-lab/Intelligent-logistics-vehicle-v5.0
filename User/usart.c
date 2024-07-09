@@ -1129,10 +1129,10 @@ static void UART4_Config(void)
 }
 void DMA1_Stream2_IRQHandler()
 {
-	u8 Tail4;
+//	u8 Tail4;
 	if (DMA_GetFlagStatus(DMA1_Stream2, DMA_FLAG_TCIF2) != RESET)
 	{
-		Tail4 = BUFFER_SIZE_U4 - DMA1_Stream2->NDTR; // 获取接收到的数据长度
+//		Tail4 = BUFFER_SIZE_U4 - DMA1_Stream2->NDTR; // 获取接收到的数据长度
 		Write_BUFF_P(0, &U4_buffer);
 	}
 	DMA_ClearFlag(DMA1_Stream2, DMA_FLAG_TCIF2);

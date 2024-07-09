@@ -2,8 +2,8 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-06 18:52:10
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-05-06 19:57:52
- * @FilePath: \stm32f4 dsp freertos\User\UI_.C
+ * @LastEditTime: 2024-07-07 13:02:59
+ * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\UI_.c
  * @Description:
  *
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
@@ -105,16 +105,20 @@ struct Page_UI_t page1;
 struct Page_UI_t page2;
 struct Page_UI_t page3;
 
-void turn_on_led(void)
+void get_start(void)
 {
 	// turn on led
-	GPIO_SetBits(GPIOE, GPIO_Pin_1);
+	taskENTER_CRITICAL();
+	main_task_init();
+	taskEXIT_CRITICAL();
 }
 
-void turn_off_led(void)
+void get_stop(void)
 {
 	// turn off led
-	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+	taskENTER_CRITICAL();
+	main_task_deinit();
+	taskEXIT_CRITICAL();
 }
 
 void turn_on_led1(void)
@@ -156,14 +160,14 @@ void test1(void)
 	page2.item_num = 2;
 	page2.item_list = (struct Item_UI_t *)malloc(sizeof(struct Item_UI_t) * 2);
 
-	page2.item_list[0].name = "turn on led";
-	page2.item_list[0].func = turn_on_led;
+	page2.item_list[0].name = "start";
+	page2.item_list[0].func = get_start;
 	page2.item_list[0].next_page = NULL;
 	page2.item_list[0].next = &page2.item_list[1];
 	page2.item_list[0].prev = NULL;
 
-	page2.item_list[1].name = "turn off led";
-	page2.item_list[1].func = turn_off_led;
+	page2.item_list[1].name = "stop";
+	page2.item_list[1].func = get_stop;
 	page2.item_list[1].next_page = NULL;
 	page2.item_list[1].next = NULL;
 	page2.item_list[1].prev = &page2.item_list[0];

@@ -27,6 +27,9 @@ struct angle
 extern int32_t x_target;
 extern int32_t y_target;
 
+extern const uint8_t bigone[4][32];
+extern const uint8_t bigtwo[4][32];
+extern const uint8_t bigthree[4][32];
 
 
 /**

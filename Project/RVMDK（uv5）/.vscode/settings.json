@@ -5,6 +5,8 @@
         "app_include.h": "c",
         "app_task.h": "c",
         "pid.h": "c",
-        "usart.h": "c"
+        "usart.h": "c",
+        "sys.h": "c",
+        "ui_.h": "c"
     }
 }

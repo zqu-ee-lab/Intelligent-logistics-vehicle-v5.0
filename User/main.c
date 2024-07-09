@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-14 20:47:46
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-06-24 22:06:39
+ * @LastEditTime: 2024-07-09 21:10:33
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\main.c
  * @Description: 
  * 
@@ -230,7 +230,7 @@ static void AppTaskCreate(void)
 	// software callback function
 	analyse_data_Handle = xTimerCreate("analyse_data", pdMS_TO_TICKS(15), pdTRUE, (void *)0, (TimerCallbackFunction_t)analyse_data);
 
-	main_task_init();
+	
 
 	Task_Number_Handle = xQueueCreate(1, 1); // 开始解析数据
 	Group_One_Handle = xEventGroupCreate();
@@ -257,29 +257,45 @@ static void analyse_data(void)
 		if (Angle.data[8] == check_sum)
 		{
 			Angle.z = -((Angle.data[5] << 8) + Angle.data[4]);
-			// printf("%.2f\r\n", (float)Angle.z / 32768 * 180);
+			printf("%.2f\r\n", (float)Angle.z / 32768 * 180);
 		}
 	}
 	
 	const char head_qr_code[] = {0xFF, 0x01};
 	if (BUFF_pop_with_check_by_Protocol(&U4_buffer, head_qr_code, 2, qr_code_data_, 8, 1, 6) == 6){
-		char str[33];
-		sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'A',qr_code_data_[1]+'A',qr_code_data_[2]+'A',qr_code_data_[3]+'A',qr_code_data_[4]+'A',qr_code_data_[5]+'A');
+		// char str[33];
+		// sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'0',qr_code_data_[1]+'0',qr_code_data_[2]+'0',qr_code_data_[3]+'0',qr_code_data_[4]+'0',qr_code_data_[5]+'0');
 		// DrawString(4, 1, str);
-		// char nmb[3]={0xFF, 0xFF,0xFF};
+		// const uint8_t nmb[3]={0xFF, 0xFF,0xFF};
 		// Usart_SendArray(UART5, nmb, 3);
 	}
 
 	const char head_color_position[] = {0xFF, 0x02};
 	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_color_position, 2, color_position, 16, 1, 2) == 2){
 		char str[33];
+		// int16_t temp = color_position[0];
+		// color_position[0] = color_position[1];
+		// color_position[1] = temp;
+		color_position[0]^=color_position[1];
+		color_position[1]^=color_position[0];
+		color_position[0]^=color_position[1];
 		sprintf(str, "%d %d", color_position[0], color_position[1]);
+		color_position_flag = 1;
 		DrawString(4, 1, str);
 	}
 
 	const char head_cycle[] = {0xFF, 0x03};
 	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_cycle, 2, cycle_position, 16, 1, 2) == 2){
-
+		cycle_position_flag = 1;
+		char str[33];
+		// int16_t temp = cycle_position[0];
+		// cycle_position[0] = cycle_position[1];
+		// cycle_position[1] = temp;
+		cycle_position[0]^=cycle_position[1];
+		cycle_position[1]^=cycle_position[0];
+		cycle_position[0]^=cycle_position[1];
+		sprintf(str, "%d %d", cycle_position[0], cycle_position[1]);
+		DrawString(4, 1, str);
 	}
 
 	const char head_claws[] = {0xFF, 0x04};
@@ -345,6 +361,12 @@ static void OLED_SHOW(void *pvParameters)
 		taskEXIT_CRITICAL();
 		vTaskDelay(200);
 	}
+
+
+    // DrawPicture(4, 0, 32, 32, (const uint8_t*)bigone);
+	// DrawPicture(4, 32, 32, 32, (const uint8_t*)bigtwo);
+	// DrawPicture(4, 64, 32, 32, (const uint8_t*)bigthree);
+	// UpdateScreenDisplay();
 }
 
 /**
@@ -408,6 +430,7 @@ static void USER_Init(void)
 
 	
 	up_down_stepper_motor_handle = Stepper_Init(USART2, 0x05, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	up_down_stepper_motor_handle->direction_invert = 1;
 	turntable_stepper_motor_handle = Stepper_Init(USART2, 0x06, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
 
 	// turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Forward, 0x400, 0x900, false);
@@ -448,7 +471,8 @@ static void BSP_Init(void)
 	// Iinitial_BUFF(&U3_buffer, BUFFER_SIZE_U3);
 	// Iinitial_BUFF(&U4_buffer, BUFFER_SIZE_U4);
 	// Iinitial_BUFF(&U5_buffer, BUFFER_SIZE_U5);
-	PWM_TIM8_config(20000, 168, 500, 2500, 2000 / 3 * 2 + 500, 2);
+	PWM_TIM8_config(20000, 168, 1860, 2000, 10000, 2);
+	PWM_TIM9_config(2000, 84, 1000, 0);
 
 	Init_USART1_All(); //*调试信息输出
 	Init_USART2_All(); //*USART2 _stepper_motor
