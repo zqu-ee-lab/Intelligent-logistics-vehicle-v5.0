@@ -162,9 +162,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>274</LineNumber>
+          <LineNumber>259</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134235322</Address>
+          <Address>134235352</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -173,23 +173,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\Project\User\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Fire_FreeRTOS\../../User/main.c\274</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>398</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134220974</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\Project\User\buffer.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Fire_FreeRTOS\../../User/buffer.c\398</Expression>
+          <Expression>\\Fire_FreeRTOS\../../User/main.c\259</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

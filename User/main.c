@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-14 20:47:46
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-07-09 21:10:33
+ * @LastEditTime: 2024-07-11 21:48:34
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\main.c
  * @Description: 
  * 
@@ -218,14 +218,6 @@ static void AppTaskCreate(void)
 						  (TaskHandle_t *)&OLED_SHOW_Handle); /* 任务控制块指针 */
 	if (xReturn == pdPASS)
 		App_Printf("OLED_SHOW任务创建成功\r\n");
-	// xReturn = xTaskCreate((TaskFunction_t)analyse_data,
-	// 					  (const char *)"analyse_data",
-	// 					  (uint16_t)256,						 /* 任务栈大小 */
-	// 					  (void *)NULL,							 /* 任务入口函数参数 */
-	// 					  (UBaseType_t)7,						 /* 任务的优先级 */
-	// 					  (TaskHandle_t *)&analyse_data_Handle); /* 任务控制块指针 */
-	// if (xReturn == pdPASS)
-	// 	App_Printf("analyse_data任务创建成功\r\n");
 
 	// software callback function
 	analyse_data_Handle = xTimerCreate("analyse_data", pdMS_TO_TICKS(15), pdTRUE, (void *)0, (TimerCallbackFunction_t)analyse_data);
@@ -262,24 +254,21 @@ static void analyse_data(void)
 	}
 	
 	const char head_qr_code[] = {0xFF, 0x01};
-	if (BUFF_pop_with_check_by_Protocol(&U4_buffer, head_qr_code, 2, qr_code_data_, 8, 1, 6) == 6){
-		// char str[33];
-		// sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'0',qr_code_data_[1]+'0',qr_code_data_[2]+'0',qr_code_data_[3]+'0',qr_code_data_[4]+'0',qr_code_data_[5]+'0');
-		// DrawString(4, 1, str);
-		// const uint8_t nmb[3]={0xFF, 0xFF,0xFF};
-		// Usart_SendArray(UART5, nmb, 3);
+	if (BUFF_pop_with_check_by_Protocol(&U3_buffer, head_qr_code, 2, qr_code_data_, 8, 1, 6) == 6){
+		char str[33];
+		sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'0',qr_code_data_[1]+'0',qr_code_data_[2]+'0',qr_code_data_[3]+'0',qr_code_data_[4]+'0',qr_code_data_[5]+'0');
+		DrawString(4, 1, str);
+		const uint8_t nmb[3]={0xFF, 0xFF,0xFF};
+		Usart_SendArray(UART5, nmb, 3);
 	}
 
 	const char head_color_position[] = {0xFF, 0x02};
 	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_color_position, 2, color_position, 16, 1, 2) == 2){
 		char str[33];
-		// int16_t temp = color_position[0];
-		// color_position[0] = color_position[1];
-		// color_position[1] = temp;
 		color_position[0]^=color_position[1];
 		color_position[1]^=color_position[0];
 		color_position[0]^=color_position[1];
-		sprintf(str, "%d %d", color_position[0], color_position[1]);
+		sprintf(str, "%3d %3d", color_position[0], color_position[1]);
 		color_position_flag = 1;
 		DrawString(4, 1, str);
 	}
@@ -288,18 +277,15 @@ static void analyse_data(void)
 	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_cycle, 2, cycle_position, 16, 1, 2) == 2){
 		cycle_position_flag = 1;
 		char str[33];
-		// int16_t temp = cycle_position[0];
-		// cycle_position[0] = cycle_position[1];
-		// cycle_position[1] = temp;
 		cycle_position[0]^=cycle_position[1];
 		cycle_position[1]^=cycle_position[0];
 		cycle_position[0]^=cycle_position[1];
-		sprintf(str, "%d %d", cycle_position[0], cycle_position[1]);
+		sprintf(str, "%3d %3d", cycle_position[0], cycle_position[1]);
 		DrawString(4, 1, str);
 	}
 
 	const char head_claws[] = {0xFF, 0x04};
-	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_claws, 2, &claw_state, 8, 1, 1) == 1){
+	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_claws, 2, (void*)&claw_state, 8, 1, 1) == 1){
 		if(claw_state != 1){
 			claw_state = 0;
 		}
@@ -431,7 +417,9 @@ static void USER_Init(void)
 	
 	up_down_stepper_motor_handle = Stepper_Init(USART2, 0x05, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
 	up_down_stepper_motor_handle->direction_invert = 1;
+	up_down_stepper_motor_handle->acceleration = 0xDF;
 	turntable_stepper_motor_handle = Stepper_Init(USART2, 0x06, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
+	turntable_stepper_motor_handle->acceleration = 0x7F;
 
 	// turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Forward, 0x400, 0x900, false);
 
@@ -477,25 +465,13 @@ static void BSP_Init(void)
 	Init_USART1_All(); //*调试信息输出
 	Init_USART2_All(); //*USART2 _stepper_motor
 	Init_UART4_All();  //*linux
-	Init_UART5_All();  //*
+	Init_USART3_All();  //*
 
 
 	Buzzer_ONE();
 	Delayms(1);
 
 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
-	// Usart_SendArray(UART5, "mr_chow\n", 8);
-	// while(1){
-	// 	char data[12];
-	// 	if(BUFF_pop_by_Protocol(&U5_buffer, (char *)"mr_chow", 7, data, 8) == 8){
-	// 		Usart_SendArray(UART5,"mr_chow",7);
-	// 		GPIO_ResetBits(GPIOE, GPIO_Pin_1);
-	// 	}
-	// 	Delayms(50);
-	// 	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
-	// 	Delayms(50);
-	// 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
-	// }
 }
 
 ///********************************END OF FILE****************************/

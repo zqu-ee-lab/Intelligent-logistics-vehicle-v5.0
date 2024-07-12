@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-06 18:52:10
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-07-07 13:02:59
+ * @LastEditTime: 2024-07-10 20:30:30
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\UI_.c
  * @Description:
  *
@@ -14,6 +14,7 @@
 #include "oled_buffer.h"
 #include "string.h"
 #include "oled_draw.h"
+#include "APP_INCLUDE.h"
 
 struct Page_UI_t
 {
@@ -189,8 +190,7 @@ void test1(void)
 	page3.item_list[1].next_page = NULL;
 	page3.item_list[1].next = NULL;
 	page3.item_list[1].prev = &page3.item_list[0];
-	
-	
-	current_page=&page1;
-	current_item=&page1.item_list[0];
+
+	current_page = &page1;
+	current_item = &page1.item_list[0];
 }

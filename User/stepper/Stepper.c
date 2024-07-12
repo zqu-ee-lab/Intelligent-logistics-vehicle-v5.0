@@ -340,7 +340,7 @@ struct Steeper_t *Stepper_Init(USART_TypeDef *pUSARTx, uint8_t address, struct B
 	this->address = address;
 	this->direction_invert = 0x00;	 // default direction invert
 	this->BUFF = BUFF;
-	this->acceleration = 0x9B;		 // default acceleration
+	this->acceleration = 0xAB;		 // default acceleration
 	this->period = 10;				 // unit : ms
 	this->check_way = check_way;	 // default check way
 	this->FOC_VERSION = FOC_VERSION; // default FOC version
