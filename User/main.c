@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-14 20:47:46
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-07-11 21:48:34
+ * @LastEditTime: 2024-07-22 20:34:28
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\User\main.c
  * @Description: 
  * 
@@ -249,39 +249,42 @@ static void analyse_data(void)
 		if (Angle.data[8] == check_sum)
 		{
 			Angle.z = -((Angle.data[5] << 8) + Angle.data[4]);
-			printf("%.2f\r\n", (float)Angle.z / 32768 * 180);
+			// printf("%.2f\r\n", (float)Angle.z / 32768 * 180);
 		}
 	}
 	
 	const char head_qr_code[] = {0xFF, 0x01};
 	if (BUFF_pop_with_check_by_Protocol(&U3_buffer, head_qr_code, 2, qr_code_data_, 8, 1, 6) == 6){
 		char str[33];
+		qr_code_flag = 1;
 		sprintf(str, "%c%c%c%c%c%c", qr_code_data_[0]+'0',qr_code_data_[1]+'0',qr_code_data_[2]+'0',qr_code_data_[3]+'0',qr_code_data_[4]+'0',qr_code_data_[5]+'0');
 		DrawString(4, 1, str);
-		const uint8_t nmb[3]={0xFF, 0xFF,0xFF};
-		Usart_SendArray(UART5, nmb, 3);
+		// const uint8_t nmb[3]={0xFF, 0xFF,0xFF};
+		// Usart_SendArray(UART5, nmb, 3);
 	}
 
 	const char head_color_position[] = {0xFF, 0x02};
-	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_color_position, 2, color_position, 16, 1, 2) == 2){
-		char str[33];
-		color_position[0]^=color_position[1];
-		color_position[1]^=color_position[0];
-		color_position[0]^=color_position[1];
-		sprintf(str, "%3d %3d", color_position[0], color_position[1]);
+	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_color_position, 2, color_position[color_position_index], 16, 1, 3) == 3){
+		// char str[33];
+		color_position[color_position_index][0]^=color_position[color_position_index][1];
+		color_position[color_position_index][1]^=color_position[color_position_index][0];
+		color_position[color_position_index][0]^=color_position[color_position_index][1];
+		color_position_index = (color_position_index + 1) % var_times;
+		// sprintf(str, "%3d %3d", color_position[0], color_position[1]);
+		// if(color_position_index==0)
 		color_position_flag = 1;
-		DrawString(4, 1, str);
+		// DrawString(4, 1, str);
 	}
 
 	const char head_cycle[] = {0xFF, 0x03};
 	if(BUFF_pop_with_check_by_Protocol(&U4_buffer, head_cycle, 2, cycle_position, 16, 1, 2) == 2){
 		cycle_position_flag = 1;
-		char str[33];
+		// char str[33];
 		cycle_position[0]^=cycle_position[1];
 		cycle_position[1]^=cycle_position[0];
 		cycle_position[0]^=cycle_position[1];
-		sprintf(str, "%3d %3d", cycle_position[0], cycle_position[1]);
-		DrawString(4, 1, str);
+		// sprintf(str, "%3d %3d", cycle_position[0], cycle_position[1]);
+		// DrawString(4, 1, str);
 	}
 
 	const char head_claws[] = {0xFF, 0x04};
@@ -417,7 +420,7 @@ static void USER_Init(void)
 	
 	up_down_stepper_motor_handle = Stepper_Init(USART2, 0x05, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
 	up_down_stepper_motor_handle->direction_invert = 1;
-	up_down_stepper_motor_handle->acceleration = 0xDF;
+	up_down_stepper_motor_handle->acceleration = 0xF3;
 	turntable_stepper_motor_handle = Stepper_Init(USART2, 0x06, U2_buffer_handle, Stepper_Check_Way_0X6B, Stepper_FOC_Version_5_0);
 	turntable_stepper_motor_handle->acceleration = 0x7F;
 
@@ -459,7 +462,7 @@ static void BSP_Init(void)
 	// Iinitial_BUFF(&U3_buffer, BUFFER_SIZE_U3);
 	// Iinitial_BUFF(&U4_buffer, BUFFER_SIZE_U4);
 	// Iinitial_BUFF(&U5_buffer, BUFFER_SIZE_U5);
-	PWM_TIM8_config(20000, 168, 1860, 2000, 10000, 2);
+	PWM_TIM8_config(20000, 168, 1715, 1030, 10000, 2);
 	PWM_TIM9_config(2000, 84, 1000, 0);
 
 	Init_USART1_All(); //*调试信息输出
@@ -469,6 +472,7 @@ static void BSP_Init(void)
 
 
 	Buzzer_ONE();
+	// Buzzer_TWO();
 	Delayms(1);
 
 	GPIO_SetBits(GPIOE, GPIO_Pin_1);

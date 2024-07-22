@@ -2,7 +2,7 @@
 Build target 'Fire_FreeRTOS'
 compiling APP_task.c...
 linking...
-Program Size: Code=34780 RO-data=2496 RW-data=292 ZI-data=41268  
+Program Size: Code=43132 RO-data=2644 RW-data=292 ZI-data=41300  
 FromELF: creating hex file...
 "..\..\Output\Fire_FreeRTOS.axf" - 0 Error(s), 0 Warning(s).
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:01
