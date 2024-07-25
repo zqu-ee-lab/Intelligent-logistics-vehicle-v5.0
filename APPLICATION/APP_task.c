@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-27 19:53:37
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-07-22 21:55:25
+ * @LastEditTime: 2024-07-25 20:13:40
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\APPLICATION\APP_task.c
  * @Description:
  *
@@ -25,7 +25,7 @@ static void adjust_car_direction(const double angle);
 static void adjust_car_position(const int aim_x, const int aim_y, const int16_t *position, uint8_t *flag, const uint8_t out_round);
 static void adjust_car_position1(const int aim_x, const int aim_y);
 
-char qr_code_data_[6] = {2, 3, 1, 3, 2, 1};	   // the data of qr code
+char qr_code_data_[6] = {0};	   // the data of qr code
 volatile uint8_t qr_code_flag = 0;			   // the flag of qr code
 int16_t color_position[var_times][3] = {0, 0}; // the color position of the car
 volatile uint8_t color_position_index = 0;
@@ -43,7 +43,7 @@ extern struct Steeper_t *turntable_stepper_motor_handle;
 double var_()
 {
 	u16 sum = 0;
-	float k = 0, var = 0, avg = 0;
+	double k = 0, var = 0, avg = 0;
 	u8 i = 0;
 	for (i = 0; i < var_times; i++)
 	{
@@ -54,9 +54,7 @@ double var_()
 	{
 		var += pow(color_position[i][1] - avg, 2) / var_times; // 求方差
 	}
-	// k = var / var_times;
 	sqrt(k);
-	// printf("k= %.2f", k);
 	return k;
 }
 
@@ -65,15 +63,18 @@ static inline void set_servo_angle(uint16_t state)
 	uint16_t angle = 0;
 	if (state == 0)
 	{
+		TIM_SetCompare1(TIM9, 1000);
 		angle = 535;
 	}
 	else if (state == 1)
 	{
 		angle = 1715;
+		TIM_SetCompare1(TIM9, 2000);
 	}
 	else if (state == 2)
 	{
 		angle = 1715;
+		TIM_SetCompare1(TIM9, 2000);
 	}
 	TIM_SetCompare1(TIM8, angle);
 }
@@ -121,7 +122,7 @@ static void claws_action(const char *color)
 	while (!color_position_flag)
 		Usart_SendArray(UART4, (const uint8_t *)get_color_instruction, 3), vTaskDelay(50);
 	vTaskDelay(1);
-	while (var_() > 1.2)
+	while (var_() > 1.1)
 	{
 		vTaskDelay(1);
 	}
@@ -129,6 +130,10 @@ static void claws_action(const char *color)
 	Usart_SendArray(UART4, stop_instruction, 3);
 
 	// 夹第一个物体
+	if(color[0] == color_position[(color_position_index+var_times-1)%var_times][2])
+	{
+		vTaskDelay(6000);
+	}
 
 	char get_claws_instruction[3] = {0xFF, 0x04, 0x1};
 	get_claws_instruction[2] = color[0];
@@ -138,8 +143,9 @@ static void claws_action(const char *color)
 	while (!claw_state)
 		vTaskDelay(20);
 	claw_state = 0;
+	// claws_up_down(down, claws_from_outside_turnable_updown_dst-0x1200);
 	claws_up_down(down, claws_from_outside_turnable_updown_dst);
-	vTaskDelay(700);
+	vTaskDelay(750);
 	claws_operation(close);
 	vTaskDelay(450);
 	claws_up_down(up, claws_from_outside_turnable_updown_dst);
@@ -195,21 +201,6 @@ static void claws_action(const char *color)
 	claws_up_down(down, claws_from_outside_turnable_updown_dst);
 	vTaskDelay(850);
 	claws_operation(close);
-	vTaskDelay(450);
-	claws_up_down(up, claws_from_outside_turnable_updown_dst);
-	vTaskDelay(850);
-	set_servo_angle(1);
-	vTaskDelay(500);
-	claws_up_down(down, place_on_car_dst);
-	vTaskDelay(650);
-	claws_operation(open);
-	vTaskDelay(200);
-	claws_up_down(up, place_on_car_dst);
-	claw_state = 0;
-	vTaskDelay(300);
-	turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
-
-	vTaskDelay(2);
 }
 
 /// @brief 抓三次放三次
@@ -233,7 +224,7 @@ static void claws_place_and_grab(const char *color)
 	vTaskDelay(2);
 	Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 	set_servo_angle(1);
-	vTaskDelay(700);
+	vTaskDelay(1000);
 
 	claws_operation(close);
 	vTaskDelay(500);
@@ -265,7 +256,7 @@ static void claws_place_and_grab(const char *color)
 	vTaskDelay(2);
 	Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 	set_servo_angle(1);
-	vTaskDelay(700);
+	vTaskDelay(1000);
 
 	claws_operation(close);
 	vTaskDelay(500);
@@ -297,7 +288,7 @@ static void claws_place_and_grab(const char *color)
 	vTaskDelay(2);
 	Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 	set_servo_angle(1);
-	vTaskDelay(700);
+	vTaskDelay(1000);
 
 	claws_operation(close);
 	vTaskDelay(400);
@@ -353,7 +344,7 @@ static void claws_place_and_grab(const char *color)
 	vTaskDelay(200);
 	set_servo_angle(0);
 	turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320, 0x5F, false);
-	vTaskDelay(10);
+	vTaskDelay(100);
 
 	// 拿第三个物体
 	wait_can_stop(50);
@@ -386,7 +377,6 @@ static void claws_place_on_object1()
 	vTaskDelay(300);
 
 	set_servo_angle(1);
-	// claws_up_down(down, (place_on_car_dst+0x30));
 	vTaskDelay(900);
 	claws_operation(close);
 	vTaskDelay(400);
@@ -398,7 +388,7 @@ static void claws_place_on_object1()
 	claws_up_down(down, 0x1770 + adjust_dst);
 	vTaskDelay(800);
 	claws_operation(open);
-	vTaskDelay(350);
+	vTaskDelay(250);
 	claws_up_down(up, 0x1770 + adjust_dst);
 	vTaskDelay(5);
 	vTaskDelay(100);
@@ -406,10 +396,10 @@ static void claws_place_on_object1()
 
 static void claws_place_on_object()
 {
-	claws_operation(open);
-	vTaskDelay(300);
+	// claws_operation(open);
+	// vTaskDelay(300);
 
-	set_servo_angle(1);
+	// set_servo_angle(1);
 	claws_up_down(down, (place_on_car_dst + 0x30));
 	vTaskDelay(800);
 	claws_operation(close);
@@ -422,7 +412,7 @@ static void claws_place_on_object()
 	claws_up_down(down, 0x1770 + adjust_dst);
 	vTaskDelay(800);
 	claws_operation(open);
-	vTaskDelay(350);
+	vTaskDelay(250);
 	claws_up_down(up, 0x1770 + adjust_dst);
 	vTaskDelay(5);
 	vTaskDelay(100);
@@ -479,6 +469,7 @@ static inline void wait_can_stop(uint32_t timeout)
 
 static void adjust_car_direction(const double angle)
 {
+	vTaskDelay(1);
 	double cur_err = (double)Angle.z / 32768 * 180 - angle;
 	if (cur_err > 180)
 		cur_err -= 360;
@@ -513,6 +504,7 @@ static void adjust_car_direction(const double angle)
 
 static void adjust_car_position1(const int aim_x, const int aim_y)
 {
+	vTaskDelay(1);
 	const double kx = -1.5, ky = -1.9;
 	double err_x = aim_x - color_position[0][0];
 	double err_y = aim_x - color_position[0][1];
@@ -549,7 +541,7 @@ static void adjust_car_position1(const int aim_x, const int aim_y)
 
 	for (int i = 0; i < 2; i++)
 	{
-		while (color_position_flag == 0 || var_() > 1.2)
+		while (color_position_flag == 0 || var_() > 1.1)
 			vTaskDelay(5);
 		err_x = aim_x - color_position[(color_position_index + var_times - 1) % var_times][0];
 		err_y = aim_y - color_position[(color_position_index + var_times - 1) % var_times][1];
@@ -584,6 +576,7 @@ static void adjust_car_position1(const int aim_x, const int aim_y)
 
 static void adjust_car_position(const int aim_x, const int aim_y, const int16_t *position, uint8_t *flag, const uint8_t out_round)
 {
+	vTaskDelay(1);
 	int times = 0;
 	do
 	{
@@ -630,7 +623,7 @@ static void adjust_car_position(const int aim_x, const int aim_y, const int16_t 
 		Stepper_synchronization(USART2);
 		wait_can_stop(50);
 		(*flag) = 0;
-		vTaskDelay(150);
+		vTaskDelay(100);
 		if (abs(err_y) <= out_round)
 			times++;
 		else
@@ -640,6 +633,7 @@ static void adjust_car_position(const int aim_x, const int aim_y, const int16_t 
 
 static void turn_left_or_right(double aim)
 {
+	vTaskDelay(1);
 	const uint32_t step = 0x3D80;
 	if (aim < -1000)
 	{
@@ -690,6 +684,7 @@ static void turn_left_or_right(double aim)
 
 static void go_ahead(int32_t step, enum Stepper_Direction_t direction)
 {
+	vTaskDelay(1);
 	if (step < 0)
 	{
 		step = -step;
@@ -698,7 +693,7 @@ static void go_ahead(int32_t step, enum Stepper_Direction_t direction)
 		else
 			direction = Stepper_Forward;
 	}
-	uint32_t speed = 0xE0;
+	uint32_t speed = 0xF0;
 	if (step < 0x1800)
 		speed = 0x30;
 	left_front_stepper_motor_handle->Achieve_Distance(left_front_stepper_motor_handle, direction, step, speed, true);
@@ -716,6 +711,7 @@ static void go_ahead(int32_t step, enum Stepper_Direction_t direction)
 #define right true
 static void left_side_step(int32_t step, bool direction)
 {
+	vTaskDelay(1);
 	uint32_t speed = 0x98;
 	if (step < 0)
 	{
@@ -763,8 +759,6 @@ void main_task(void)
 		// wait for the car to stop
 		wait_can_stop(100);
 
-		// vTaskDelay(3000);
-
 		// go straight
 		go_ahead(0x9000, Stepper_Forward);
 		vTaskDelay(1);
@@ -775,7 +769,7 @@ void main_task(void)
 		while (0 == qr_code_flag)
 			vTaskDelay(20);
 
-		go_ahead(0xA0F0, Stepper_Forward);
+		go_ahead(0xA150, Stepper_Forward);
 		wait_can_stop(150);
 		set_servo_angle(0);
 
@@ -786,6 +780,46 @@ void main_task(void)
 		init_pid_1;
 		claws_action(qr_code_data_);
 
+#if zhoujierong
+		vTaskDelay(450);
+		go_ahead(0x5500, Stepper_Forward);
+		vTaskDelay(1);
+		claws_up_down(up, claws_from_outside_turnable_updown_dst);
+		vTaskDelay(850);
+		set_servo_angle(1);
+		wait_can_stop(80);
+		vTaskDelay(200);
+		left_side_step(0x1400, left);
+		vTaskDelay(1);
+		claws_up_down(down, place_on_car_dst);
+		wait_can_stop(50);
+		turn_left_or_right(-90);
+		vTaskDelay(200);
+		claws_operation(open);
+		wait_can_stop(100);
+		adjust_car_direction(-90);
+		vTaskDelay(200);
+		claws_up_down(up, place_on_car_dst);
+		claw_state = 0;
+		vTaskDelay(200);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+
+#else
+		vTaskDelay(450);
+		claws_up_down(up, claws_from_outside_turnable_updown_dst);
+		vTaskDelay(850);
+		set_servo_angle(1);
+		vTaskDelay(500);
+		claws_up_down(down, place_on_car_dst);
+		vTaskDelay(650);
+		claws_operation(open);
+		vTaskDelay(200);
+		claws_up_down(up, place_on_car_dst);
+		claw_state = 0;
+		vTaskDelay(200);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+
+		vTaskDelay(2);
 		// 回到路中间
 		set_servo_angle(2);
 		claws_operation(close);
@@ -801,6 +835,8 @@ void main_task(void)
 		turn_left_or_right(-90);
 		wait_can_stop(100);
 		adjust_car_direction(-90);
+#endif
+
 
 		vTaskDelay(1);
 
@@ -820,6 +856,30 @@ void main_task(void)
 
 		claws_place_and_grab(qr_code_data_);
 
+#if zhoujierong
+
+		set_servo_angle(1);
+		vTaskDelay(1);
+		go_ahead(0x6F00 - 0x1E00 * (qr_code_data_[2] - 3), Stepper_Forward);
+		vTaskDelay(700);
+		claws_up_down(down, place_on_car_dst);
+		vTaskDelay(700);
+		claws_operation(open);
+		vTaskDelay(200);
+		claws_up_down(up, place_on_car_dst);
+		vTaskDelay(5);
+		wait_can_stop(50);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+		vTaskDelay(2);
+		left_side_step(0x1200, left);
+		wait_can_stop(50);
+
+		turn_left_or_right(-180);
+		wait_can_stop(100);
+		adjust_car_direction(-180);
+
+#else
+
 		set_servo_angle(1);
 		vTaskDelay(800);
 		vTaskDelay(1);
@@ -832,7 +892,7 @@ void main_task(void)
 		vTaskDelay(5);
 		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
 		vTaskDelay(230);
-		
+
 		left_side_step(0x1200, left);
 		wait_can_stop(50);
 		go_ahead(0x6F00 - 0x1E00 * (qr_code_data_[2] - 3), Stepper_Forward);
@@ -850,6 +910,7 @@ void main_task(void)
 		wait_can_stop(150);
 		// while(1) vTaskDelay(20);
 		adjust_car_direction(-180);
+#endif
 
 		if (qr_code_data_[0] == 0x1)
 			go_ahead(0x8D00, Stepper_Forward);
@@ -880,7 +941,7 @@ void main_task(void)
 		vTaskDelay(2);
 		Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 		set_servo_angle(1);
-		vTaskDelay(700);
+		vTaskDelay(900);
 
 		claws_operation(close);
 		vTaskDelay(700);
@@ -912,7 +973,7 @@ void main_task(void)
 		vTaskDelay(2);
 		Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 		set_servo_angle(1);
-		vTaskDelay(700);
+		vTaskDelay(900);
 
 		claws_operation(close);
 		vTaskDelay(700);
@@ -944,7 +1005,7 @@ void main_task(void)
 		vTaskDelay(2);
 		Usart_SendArray(UART4, (const uint8_t *)stop_instruction, 3);
 		set_servo_angle(1);
-		vTaskDelay(700);
+		vTaskDelay(900);
 
 		claws_operation(close);
 		vTaskDelay(700);
@@ -1002,6 +1063,46 @@ void main_task(void)
 		init_pid_1;
 		claws_action(qr_code_data_ + 3);
 
+#if zhoujierong
+		vTaskDelay(450);
+		go_ahead(0x5500, Stepper_Forward);
+		vTaskDelay(1);
+		claws_up_down(up, claws_from_outside_turnable_updown_dst);
+		vTaskDelay(850);
+		set_servo_angle(1);
+		wait_can_stop(80);
+		vTaskDelay(200);
+		left_side_step(0x1400, left);
+		vTaskDelay(1);
+		claws_up_down(down, place_on_car_dst);
+		wait_can_stop(50);
+		turn_left_or_right(-90);
+		wait_can_stop(100);
+		vTaskDelay(200);
+		claws_operation(open);
+		adjust_car_direction(-90);
+		vTaskDelay(20);
+		claws_up_down(up, place_on_car_dst);
+		claw_state = 0;
+		vTaskDelay(200);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+
+#else
+		vTaskDelay(450);
+		claws_up_down(up, claws_from_outside_turnable_updown_dst);
+		vTaskDelay(850);
+		set_servo_angle(1);
+		vTaskDelay(500);
+		claws_up_down(down, place_on_car_dst);
+		vTaskDelay(650);
+		claws_operation(open);
+		vTaskDelay(200);
+		claws_up_down(up, place_on_car_dst);
+		claw_state = 0;
+		vTaskDelay(200);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+
+		vTaskDelay(2);
 		// 回到路中间
 		set_servo_angle(2);
 		claws_operation(close);
@@ -1009,13 +1110,17 @@ void main_task(void)
 		left_side_step(0x1400, left);
 		wait_can_stop(50);
 		adjust_car_direction(0);
+		vTaskDelay(1);
 
 		// 去右上角
 		go_ahead(0x5500, Stepper_Forward);
 		wait_can_stop(150);
 		turn_left_or_right(-90);
-		wait_can_stop(150);
+		wait_can_stop(100);
 		adjust_car_direction(-90);
+#endif
+
+		vTaskDelay(1);
 		if (qr_code_data_[3] == 0x1)
 			go_ahead(0x96A0, Stepper_Forward);
 		else if (qr_code_data_[3] == 0x2)
@@ -1031,9 +1136,33 @@ void main_task(void)
 
 		claws_place_and_grab(qr_code_data_ + 3);
 
+#if zhoujierong
+
 		set_servo_angle(1);
 		vTaskDelay(1);
+		go_ahead(0x6F00 - 0x1E00 * (qr_code_data_[5] - 3), Stepper_Forward);
+		vTaskDelay(700);
+		claws_up_down(down, place_on_car_dst);
+		vTaskDelay(700);
+		claws_operation(open);
+		vTaskDelay(200);
+		claws_up_down(up, place_on_car_dst);
+		vTaskDelay(5);
+		wait_can_stop(50);
+		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
+		vTaskDelay(2);
+		left_side_step(0x1200, left);
+		wait_can_stop(50);
+
+		turn_left_or_right(-180);
+		wait_can_stop(100);
+		adjust_car_direction(-180);
+
+#else
+
+		set_servo_angle(1);
 		vTaskDelay(800);
+		vTaskDelay(1);
 		claws_up_down(down, place_on_car_dst);
 		vTaskDelay(700);
 
@@ -1042,23 +1171,27 @@ void main_task(void)
 		claws_up_down(up, place_on_car_dst);
 		vTaskDelay(230);
 		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320 * 2, 0x3F, false);
-		vTaskDelay(300);
-		
+		vTaskDelay(5);
+
 		left_side_step(0x1200, left);
 		wait_can_stop(50);
 		go_ahead(0x6F00 - 0x1E00 * (qr_code_data_[5] - 3), Stepper_Forward);
-		wait_can_stop(150);
+		vTaskDelay(100);
 
-		vTaskDelay(1);
+		// !!
+		vTaskDelay(5);
 		claws_operation(close);
 
+		// 去左上角
+		wait_can_stop(150);
 		vTaskDelay(1);
-
 
 		turn_left_or_right(-180);
 		wait_can_stop(150);
+		// while(1) vTaskDelay(20);
 		adjust_car_direction(-180);
-
+#endif
+		vTaskDelay(1);
 		if (qr_code_data_[3] == 0x1)
 			go_ahead(0x8F00, Stepper_Forward);
 		else if (qr_code_data_[3] == 0x2)
@@ -1080,14 +1213,16 @@ void main_task(void)
 			else
 				claws_place_on_object();
 			// 去
+
 			adjust_car_direction(180);
+			set_servo_angle(1);
 			go_ahead(0x1F00 * (qr_code_data_[i + 1 + 3] - qr_code_data_[i + 3]), Stepper_Forward);
 			wait_can_stop(50);
 		}
 
 		claws_place_on_object();
 
-		vTaskDelay(7);
+		vTaskDelay(2);
 		left_side_step(0x1070, left);
 		vTaskDelay(1);
 		turntable_stepper_motor_handle->Achieve_Distance(turntable_stepper_motor_handle, Stepper_Backward, 0x320, 0x5F, false);
@@ -1111,7 +1246,5 @@ void main_task(void)
 		go_ahead(0x8500, Stepper_Forward);
 
 		vTaskDelete(main_task_handle);
-
-		// 回
 	}
 }

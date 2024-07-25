@@ -2,7 +2,7 @@
  * @Author: JAR_CHOW
  * @Date: 2024-05-14 20:47:46
  * @LastEditors: JAR_CHOW
- * @LastEditTime: 2024-07-22 20:48:52
+ * @LastEditTime: 2024-07-25 20:23:20
  * @FilePath: \RVMDK（uv5）c:\Users\mrchow\Desktop\vscode_repo\Intelligent-logistics-vehicle-v5.0\APPLICATION\APP_INCLUDE.h
  * @Description:
  *
@@ -25,6 +25,8 @@ void main_task_deinit(void);
 
 #define var_times 5
 
+#define zhoujierong 1
+
 #define adjust_dst (0xB50)
 
 #define claws_from_outside_turnable_updown_dst (0x1070+adjust_dst)
@@ -32,8 +34,8 @@ void main_task_deinit(void);
 #define observe_dst (0x1550+adjust_dst)
 #define place_on_ground_dst (0x3530+adjust_dst)
 
-#define place_aim_x (213)
-#define place_aim_y (320)
+#define place_aim_x (212)
+#define place_aim_y (322)
 
 extern struct angle Angle;                   // the angle of the car
 extern char qr_code_data_[6];                // the data of qr code

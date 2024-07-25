@@ -778,11 +778,6 @@
               <FilePath>..\..\User\FreeRTOSConfig.h</FilePath>
             </File>
             <File>
-              <FileName>mecanum.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\User\algorithm\mecanum\mecanum.c</FilePath>
-            </File>
-            <File>
               <FileName>buffer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\buffer.c</FilePath>
@@ -793,19 +788,9 @@
               <FilePath>..\..\User\delay.c</FilePath>
             </File>
             <File>
-              <FileName>Driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\User\Driver.c</FilePath>
-            </File>
-            <File>
               <FileName>encoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>JY62.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\User\JY62.c</FilePath>
             </File>
             <File>
               <FileName>key.c</FileName>
@@ -841,11 +826,6 @@
               <FileName>usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>VL53.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\User\VL53.c</FilePath>
             </File>
             <File>
               <FileName>OLED.c</FileName>

@@ -30,6 +30,7 @@ extern int32_t y_target;
 extern const uint8_t bigone[4][32];
 extern const uint8_t bigtwo[4][32];
 extern const uint8_t bigthree[4][32];
+extern const uint8_t big_add_font[4][32];
 
 
 /**
